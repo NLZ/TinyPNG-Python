@@ -25,15 +25,24 @@ if response.status == 201:
   # Compression was successful, retrieve output from Location header.
   result = urllib.request.urlopen(response.getheader("Location"), cafile = cafile).read()
 
-  # Output name based on input, check for existing one
-  outpath = args.input.name
-  splitpath = os.path.splitext(outpath)
-  counter = 0
-  while os.path.isfile(outpath):
-    outpath = splitpath[0] + "(" + str(counter) + ")" + splitpath[1]
-    counter = counter + 1
+  # Rename original file
+  orig_path = args.input.name
+  rename_path = orig_path
+  args.input.close()  
 
-  open(outpath, "wb").write(result)
+  while True:
+    try:
+      rename_path_split = os.path.splitext(rename_path)
+      rename_path = rename_path_split[0] + "_orig" + rename_path_split[1]
+      os.rename(orig_path, rename_path)
+      break
+    except FileExistsError:
+      print("File exist")
+
+  # Name the new one as the original
+  open(orig_path, "wb").write(result)
+
 else:
   # Something went wrong! You can parse the JSON body for details.
   print("Compression failed")
+  input("Press enter to continue")
